@@ -6,10 +6,29 @@ import {
 } from 'lucide-react';
 import { twoFactorService } from '../../services/twoFactorService';
 import { useTheme } from '../../context/ThemeContext';
+import api from '../../services/api';
+
+// ============================================
+// TIPOS PARA ERRORES DE API
+// ============================================
+
+interface ApiErrorResponse {
+  detail?: string;
+  message?: string;
+}
+
+interface ApiError {
+  response?: {
+    data?: ApiErrorResponse;
+    status?: number;
+  };
+  message?: string;
+}
 
 // ============================================
 // COMPONENTE PRINCIPAL - TwoFactorSetupPage
 // ============================================
+
 interface TwoFactorSetupPageProps {
   isOpen: boolean;
   onClose: () => void;
@@ -46,8 +65,15 @@ export const TwoFactorSetupPage: React.FC<TwoFactorSetupPageProps> = ({
     
     try {
       console.log('🚀 Iniciando configuración 2FA...');
+      console.log('🔑 Contraseña ingresada:', password ? '****' : 'vacía');
+      console.log('📝 Longitud:', password.length);
       
-      const data = await twoFactorService.setup();
+      // Enviar la contraseña correctamente en el body
+      const response = await api.post('/auth/2fa/setup', {
+        password: password.trim()
+      });
+      
+      const data = response.data;
       
       console.log('📦 Respuesta:', data);
       
@@ -65,8 +91,25 @@ export const TwoFactorSetupPage: React.FC<TwoFactorSetupPageProps> = ({
       setStep('verify');
       
     } catch (err) {
-      console.error('❌ Error en enableTwoFactor:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Error al configurar 2FA';
+      const errorObj = err as ApiError;
+      console.error('❌ Error en enableTwoFactor:', errorObj);
+      console.error('📝 Detalles del error:', errorObj.response?.data);
+      console.error('📝 Status:', errorObj.response?.status);
+      
+      // Mostrar mensaje de error más específico
+      let errorMessage = 'Error al configurar 2FA';
+      const status = errorObj.response?.status;
+      const detail = errorObj.response?.data?.detail;
+      
+      if (detail) {
+        errorMessage = detail;
+      } else if (status === 401) {
+        errorMessage = 'Contraseña incorrecta. Por favor, verifica tu contraseña.';
+      } else if (status === 422) {
+        errorMessage = 'Error en los datos enviados. Por favor, verifica tu contraseña.';
+      } else if (errorObj.message) {
+        errorMessage = errorObj.message;
+      }
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -103,8 +146,15 @@ export const TwoFactorSetupPage: React.FC<TwoFactorSetupPageProps> = ({
         throw new Error('Código inválido');
       }
     } catch (err) {
-      console.error('❌ Error en verifyEnableTwoFactor:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Código inválido';
+      const errorObj = err as ApiError;
+      console.error('❌ Error en verifyEnableTwoFactor:', errorObj);
+      let errorMessage = 'Código inválido';
+      const detail = errorObj.response?.data?.detail;
+      if (detail) {
+        errorMessage = detail;
+      } else if (errorObj.message) {
+        errorMessage = errorObj.message;
+      }
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -142,12 +192,64 @@ export const TwoFactorSetupPage: React.FC<TwoFactorSetupPageProps> = ({
 
   if (!isOpen) return null;
 
+  // Estilos comunes para evitar inline styles repetidos
+  const overlayStyle = {
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backdropFilter: 'blur(8px)'
+  };
+
+  const modalStyle = {
+    background: `linear-gradient(135deg, ${colors.surface}cc, ${colors.surface}99)`,
+    border: `1px solid ${colors.border}`,
+    backdropFilter: 'blur(20px)'
+  };
+
+  const headerGradientStyle = {
+    background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`
+  };
+
+  const inputStyle = (hasError: boolean) => ({
+    backgroundColor: `${colors.background}cc`,
+    border: `1px solid ${hasError ? colors.error : colors.border}`,
+    color: colors.text,
+  });
+
+  const buttonPrimaryStyle = {
+    background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+    color: '#ffffff'
+  };
+
+  const buttonSecondaryStyle = {
+    border: `1px solid ${colors.border}`,
+    color: colors.textSecondary
+  };
+
+  const infoBoxStyle = {
+    backgroundColor: `${colors.primary}10`,
+    border: `1px solid ${colors.primary}20`
+  };
+
+  const codeBoxStyle = {
+    backgroundColor: `${colors.background}cc`,
+    border: `1px solid ${colors.primary}30`,
+    color: colors.text
+  };
+
+  const qrContainerStyle = {
+    backgroundColor: colors.surface,
+    boxShadow: `0 0 20px ${colors.primary}40`
+  };
+
+  const spinnerStyle = {
+    borderColor: colors.primary
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)', backdropFilter: 'blur(8px)' }}
+          style={overlayStyle}
           onClick={(e) => {
             if (e.target === e.currentTarget && step !== 'verify') onClose();
           }}
@@ -158,16 +260,12 @@ export const TwoFactorSetupPage: React.FC<TwoFactorSetupPageProps> = ({
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             className="relative w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden"
-            style={{ 
-              background: `linear-gradient(135deg, ${colors.surface}cc, ${colors.surface}99)`,
-              border: `1px solid ${colors.border}`,
-              backdropFilter: 'blur(20px)'
-            }}
+            style={modalStyle}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="relative p-6 border-b" style={{ borderColor: colors.border }}>
-              <div className="absolute top-0 left-0 right-0 h-1" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }} />
+              <div className="absolute top-0 left-0 right-0 h-1" style={headerGradientStyle} />
               
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
@@ -175,7 +273,9 @@ export const TwoFactorSetupPage: React.FC<TwoFactorSetupPageProps> = ({
                     <Shield className="w-6 h-6" style={{ color: colors.primary }} />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold" style={{ color: colors.text }}>Autenticación en Dos Pasos</h2>
+                    <h2 className="text-xl font-bold" style={{ color: colors.text }}>
+                      Autenticación en Dos Pasos
+                    </h2>
                     <p className="text-sm" style={{ color: colors.textSecondary }}>
                       Paso {step === 'setup' ? '1' : step === 'verify' ? '2' : '3'} de 3
                     </p>
@@ -205,7 +305,7 @@ export const TwoFactorSetupPage: React.FC<TwoFactorSetupPageProps> = ({
                   exit={{ opacity: 0, y: -20 }}
                   className="space-y-6"
                 >
-                  <div className="p-4 rounded-xl flex items-start gap-3" style={{ backgroundColor: `${colors.primary}10`, border: `1px solid ${colors.primary}20` }}>
+                  <div className="p-4 rounded-xl flex items-start gap-3" style={infoBoxStyle}>
                     <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: colors.primary }} />
                     <div>
                       <p className="font-medium mb-1" style={{ color: colors.text }}>Confirma tu identidad</p>
@@ -216,11 +316,7 @@ export const TwoFactorSetupPage: React.FC<TwoFactorSetupPageProps> = ({
                   <input
                     type="password"
                     className="w-full px-4 py-3 rounded-xl focus:outline-none transition-all"
-                    style={{ 
-                      backgroundColor: `${colors.background}cc`,
-                      border: `1px solid ${error ? colors.error : colors.border}`,
-                      color: colors.text,
-                    }}
+                    style={inputStyle(!!error)}
                     placeholder="Tu contraseña actual"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -240,7 +336,7 @@ export const TwoFactorSetupPage: React.FC<TwoFactorSetupPageProps> = ({
                     <button 
                       onClick={onClose} 
                       className="flex-1 px-4 py-2 rounded-xl transition hover:bg-white/5"
-                      style={{ border: `1px solid ${colors.border}`, color: colors.textSecondary }}
+                      style={buttonSecondaryStyle}
                       aria-label="Cancelar"
                       title="Cancelar"
                     >
@@ -250,7 +346,7 @@ export const TwoFactorSetupPage: React.FC<TwoFactorSetupPageProps> = ({
                       onClick={handleStartSetup}
                       disabled={loading}
                       className="flex-1 px-4 py-2 rounded-xl font-semibold transition-all disabled:opacity-50"
-                      style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`, color: '#ffffff' }}
+                      style={buttonPrimaryStyle}
                       aria-label="Continuar"
                       title="Continuar"
                     >
@@ -274,12 +370,12 @@ export const TwoFactorSetupPage: React.FC<TwoFactorSetupPageProps> = ({
                       <p className="font-medium mb-2" style={{ color: colors.text }}>Escanea este código QR</p>
                       <p className="text-sm mb-4" style={{ color: colors.textSecondary }}>con Google Authenticator o Authy</p>
                       
-                      <div className="w-48 h-48 mx-auto rounded-xl p-3" style={{ backgroundColor: colors.surface, boxShadow: `0 0 20px ${colors.primary}40` }}>
+                      <div className="w-48 h-48 mx-auto rounded-xl p-3" style={qrContainerStyle}>
                         {qrCode ? (
                           <img src={qrCode} alt="Código QR para autenticación de dos factores" className="w-full h-full" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: colors.primary }} />
+                            <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={spinnerStyle} />
                           </div>
                         )}
                       </div>
@@ -291,7 +387,7 @@ export const TwoFactorSetupPage: React.FC<TwoFactorSetupPageProps> = ({
                     <div>
                       <p className="text-sm mb-2" style={{ color: colors.textSecondary }}>¿No puedes escanear?</p>
                       <div className="flex gap-2 mb-6">
-                        <code className="flex-1 px-3 py-2 rounded-lg font-mono text-sm text-center break-all" style={{ backgroundColor: `${colors.background}cc`, border: `1px solid ${colors.primary}30`, color: colors.text }}>
+                        <code className="flex-1 px-3 py-2 rounded-lg font-mono text-sm text-center break-all" style={codeBoxStyle}>
                           {manualKey}
                         </code>
                         <button 
@@ -323,11 +419,7 @@ export const TwoFactorSetupPage: React.FC<TwoFactorSetupPageProps> = ({
                               }
                             }}
                             className="w-12 h-14 text-center text-2xl font-bold rounded-xl focus:outline-none transition-all"
-                            style={{ 
-                              backgroundColor: `${colors.background}cc`,
-                              border: `1px solid ${error ? colors.error : colors.border}`,
-                              color: colors.text,
-                            }}
+                            style={inputStyle(!!error)}
                             autoFocus={index === 0}
                             aria-label={`Dígito ${index + 1} del código de verificación`}
                             placeholder="0"
@@ -346,7 +438,7 @@ export const TwoFactorSetupPage: React.FC<TwoFactorSetupPageProps> = ({
                         <button 
                           onClick={onClose} 
                           className="flex-1 px-4 py-2 rounded-xl transition hover:bg-white/5"
-                          style={{ border: `1px solid ${colors.border}`, color: colors.textSecondary }}
+                          style={buttonSecondaryStyle}
                           aria-label="Cancelar"
                           title="Cancelar"
                         >
@@ -356,7 +448,7 @@ export const TwoFactorSetupPage: React.FC<TwoFactorSetupPageProps> = ({
                           onClick={handleVerifyCode}
                           disabled={loading || verificationCode.length !== 6}
                           className="flex-1 px-4 py-2 rounded-xl font-semibold transition-all disabled:opacity-50"
-                          style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`, color: '#ffffff' }}
+                          style={buttonPrimaryStyle}
                           aria-label="Verificar código"
                           title="Verificar código"
                         >
@@ -384,7 +476,7 @@ export const TwoFactorSetupPage: React.FC<TwoFactorSetupPageProps> = ({
                     <p className="text-sm" style={{ color: colors.textSecondary }}>Tu cuenta ahora está protegida con autenticación en dos pasos</p>
                   </div>
 
-                  <div className="p-4 rounded-xl" style={{ backgroundColor: `${colors.primary}10`, border: `1px solid ${colors.primary}20` }}>
+                  <div className="p-4 rounded-xl" style={infoBoxStyle}>
                     <div className="flex items-start gap-2 mb-3">
                       <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: colors.primary }} />
                       <div>
@@ -409,7 +501,7 @@ export const TwoFactorSetupPage: React.FC<TwoFactorSetupPageProps> = ({
                     {showCodes && recoveryCodes.length > 0 && (
                       <div className="grid grid-cols-2 gap-2 mb-4">
                         {recoveryCodes.map((code, i) => (
-                          <div key={i} className="px-3 py-2 rounded-lg text-center font-mono text-sm" style={{ backgroundColor: `${colors.background}cc`, border: `1px solid ${colors.primary}30`, color: colors.text }}>
+                          <div key={i} className="px-3 py-2 rounded-lg text-center font-mono text-sm" style={codeBoxStyle}>
                             {code}
                           </div>
                         ))}
@@ -444,8 +536,8 @@ export const TwoFactorSetupPage: React.FC<TwoFactorSetupPageProps> = ({
 
                   <button 
                     onClick={handleComplete} 
-                    className="w-full py-3 rounded-xl font-semibold transition-all" 
-                    style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`, color: '#ffffff' }}
+                    className="w-full py-3 rounded-xl font-semibold transition-all"
+                    style={buttonPrimaryStyle}
                     aria-label="Cerrar"
                     title="Cerrar"
                   >
