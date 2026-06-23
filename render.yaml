@@ -1,0 +1,16 @@
+services:
+  - type: static
+    name: flutter-play-web
+    repo: https://github.com/JosePablo1996/Flutter_Play_Web
+    branch: master
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://flutter-play-api.onrender.com
+      - key: VITE_ENVIRONMENT
+        value: production
