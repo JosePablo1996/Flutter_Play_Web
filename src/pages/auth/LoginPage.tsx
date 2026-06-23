@@ -131,7 +131,7 @@ const LoginOptionsModal: React.FC<{
   const { colors } = useTheme();
   const [passkeyLoading, setPasskeyLoading] = useState(false);
 
-  // ✅ DETECTAR ENTORNO: Solo mostrar Passkey en desarrollo
+  // Detectar entorno: Solo mostrar Passkey en desarrollo
   const isDevelopment = import.meta.env.DEV;
 
   const handleOtpLogin = () => {
@@ -229,7 +229,7 @@ const LoginOptionsModal: React.FC<{
             <ArrowRight className="w-5 h-5" style={{ color: colors.textSecondary }} />
           </button>
 
-          {/* ✅ Botón Passkey - SOLO EN DESARROLLO */}
+          {/* Botón Passkey - SOLO EN DESARROLLO */}
           {isDevelopment && (
             <button
               onClick={handlePasskeyLogin}
@@ -445,35 +445,35 @@ const LoginPage: React.FC = () => {
 
   return (
     <>
-      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: colors.background }}>
+      <div className="min-h-screen flex items-center justify-center p-4 py-8 md:py-12 overflow-y-auto" style={{ backgroundColor: colors.background }}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-5xl"
+          className="w-full max-w-5xl my-4 md:my-8"
         >
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
             {/* Columna izquierda - Logo e información */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
-              className="hidden lg:flex flex-col justify-center items-center p-8 rounded-2xl backdrop-blur-sm text-center"
+              className="hidden lg:flex flex-col justify-center items-center p-6 md:p-8 rounded-2xl backdrop-blur-sm text-center"
               style={{
                 background: `linear-gradient(135deg, ${colors.primary}10, ${colors.secondary}10)`,
                 border: `1px solid ${colors.border}`
               }}
             >
-              <div className="w-32 h-32 mx-auto mb-6 rounded-2xl flex items-center justify-center shadow-xl" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>
-                <Landmark className="w-16 h-16 text-white" />
+              <div className="w-28 h-28 md:w-32 md:h-32 mx-auto mb-4 md:mb-6 rounded-2xl flex items-center justify-center shadow-xl" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>
+                <Landmark className="w-14 h-14 md:w-16 md:h-16 text-white" />
               </div>
               
-              <h1 className="text-4xl font-bold mb-2" style={{ color: colors.text }}>Flutter Play</h1>
-              <p className="text-lg mb-8" style={{ color: colors.primary }}>Mi Banca Universitaria</p>
+              <h1 className="text-3xl md:text-4xl font-bold mb-2" style={{ color: colors.text }}>Flutter Play</h1>
+              <p className="text-base md:text-lg mb-6 md:mb-8" style={{ color: colors.primary }}>Mi Banca Universitaria</p>
               
-              <div className="w-16 h-0.5 rounded-full mb-8" style={{ background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})` }} />
+              <div className="w-16 h-0.5 rounded-full mb-6 md:mb-8" style={{ background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary})` }} />
               
-              <div className="space-y-6 text-left w-full">
+              <div className="space-y-4 md:space-y-6 text-left w-full">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${colors.primary}20` }}>
                     <Shield className="w-5 h-5" style={{ color: colors.primary }} />
@@ -509,25 +509,26 @@ const LoginPage: React.FC = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3, duration: 0.5 }}
+              className="flex items-center justify-center"
             >
-              <div className="rounded-2xl p-8 backdrop-blur-sm" style={{ 
+              <div className="w-full rounded-2xl p-5 md:p-8 backdrop-blur-sm max-h-[90vh] overflow-y-auto" style={{ 
                 backgroundColor: `${colors.surface}cc`,
                 border: `1px solid ${colors.border}`,
                 boxShadow: `0 20px 40px rgba(0, 0, 0, 0.1)`
               }}>
-                <div className="lg:hidden text-center mb-8">
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>
-                    <Landmark className="w-10 h-10 text-white" />
+                <div className="lg:hidden text-center mb-6 md:mb-8">
+                  <div className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-4 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}>
+                    <Landmark className="w-8 h-8 md:w-10 md:h-10 text-white" />
                   </div>
-                  <h1 className="text-2xl font-bold" style={{ color: colors.text }}>Flutter Play</h1>
+                  <h1 className="text-xl md:text-2xl font-bold" style={{ color: colors.text }}>Flutter Play</h1>
                   <div className="flex items-center justify-center gap-2 mt-2">
                     <PiggyBank className="w-4 h-4" style={{ color: colors.primary }} />
-                    <p className="text-sm" style={{ color: colors.textSecondary }}>Mi Banca Universitaria</p>
+                    <p className="text-xs md:text-sm" style={{ color: colors.textSecondary }}>Mi Banca Universitaria</p>
                     <Building2 className="w-4 h-4" style={{ color: colors.secondary }} />
                   </div>
                 </div>
 
-                <div className="hidden lg:block text-center mb-8">
+                <div className="hidden lg:block text-center mb-6 md:mb-8">
                   <h2 className="text-2xl font-bold" style={{ color: colors.text }}>Bienvenido de vuelta</h2>
                   <p className="text-sm mt-1" style={{ color: colors.textSecondary }}>Inicia sesión para continuar</p>
                 </div>
@@ -539,7 +540,7 @@ const LoginPage: React.FC = () => {
                   </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5">
                   <NeonInput
                     label="Correo Electrónico"
                     type="email"
@@ -601,7 +602,7 @@ const LoginPage: React.FC = () => {
                   </NeonButton>
                 </form>
 
-                <div className="relative my-6">
+                <div className="relative my-4 md:my-6">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t" style={{ borderColor: colors.border }} />
                   </div>
@@ -624,7 +625,7 @@ const LoginPage: React.FC = () => {
                   Inicie sesión de otras formas
                 </motion.button>
 
-                <div className="mt-6 text-center">
+                <div className="mt-4 md:mt-6 text-center">
                   <p className="text-sm" style={{ color: colors.textSecondary }}>
                     ¿No tienes cuenta?{' '}
                     <Link to="/register" className="font-semibold hover:underline inline-flex items-center gap-1 transition-colors" style={{ color: colors.primary }}>
