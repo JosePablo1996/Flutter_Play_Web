@@ -8,6 +8,10 @@ export default defineConfig(({ mode }) => {
   
   return {
     plugins: [react()],
+    
+    // ✅ Configuración base para producción (SPA)
+    base: '/',
+    
     server: {
       port: 5173,
       proxy: {
@@ -26,74 +30,50 @@ export default defineConfig(({ mode }) => {
         }
       }
     },
+    
     build: {
-      // Aumentar límite de advertencia a 1MB
       chunkSizeWarningLimit: 1000,
-      
-      // Source maps solo en desarrollo
       sourcemap: mode === 'development',
-      
-      // Target de navegadores
       target: 'es2020',
-      
-      // Configuración de chunks para code splitting
+      copyPublicDir: true,
       rollupOptions: {
         output: {
-          // Nombres de archivos para mejor cacheo
           chunkFileNames: 'assets/js/[name]-[hash].js',
           entryFileNames: 'assets/js/[name]-[hash].js',
           assetFileNames: 'assets/css/[name]-[hash].[ext]',
-          
-          // Code splitting manual usando FUNCIÓN (no objeto)
-          manualChunks(id: string) {
-            // React core y routing
+          manualChunks: (id: string) => {
             if (id.includes('node_modules/react') || 
                 id.includes('node_modules/react-dom') ||
                 id.includes('node_modules/react-router-dom')) {
               return 'vendor-react';
             }
-            
-            // Framer Motion (animaciones)
             if (id.includes('node_modules/framer-motion')) {
               return 'vendor-animations';
             }
-            
-            // Lucide React (iconos)
             if (id.includes('node_modules/lucide-react')) {
               return 'vendor-icons';
             }
-            
-            // Recharts (gráficos)
             if (id.includes('node_modules/recharts') ||
                 id.includes('node_modules/d3-') ||
                 id.includes('node_modules/victory-vendor')) {
               return 'vendor-charts';
             }
-            
-            // React Calendar
             if (id.includes('node_modules/react-calendar') ||
                 id.includes('node_modules/@wojtekmaj')) {
               return 'vendor-calendar';
             }
-            
-            // Supabase
             if (id.includes('node_modules/@supabase')) {
               return 'vendor-supabase';
             }
-            
-            // Axios y utilidades HTTP
             if (id.includes('node_modules/axios')) {
               return 'vendor-utils';
             }
-            
-            // Si no aplica a ninguna categoría, undefined = chunk por defecto
             return undefined;
           }
         }
       }
     },
     
-    // Optimizaciones de dependencias
     optimizeDeps: {
       include: [
         'react',
@@ -109,13 +89,11 @@ export default defineConfig(({ mode }) => {
       exclude: [],
     },
     
-    // Definir variables globales
     define: {
       'import.meta.env.VITE_FORCE_PASSKEY': JSON.stringify(env.VITE_FORCE_PASSKEY),
       'import.meta.env.VITE_FORCE_DEBUG': JSON.stringify(env.VITE_FORCE_DEBUG),
     },
     
-    // Configuración de preview (para pruebas locales del build)
     preview: {
       port: 4173,
       strictPort: true,
